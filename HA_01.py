@@ -64,6 +64,7 @@ class HighScore:
 class Player:
     def __init__(self,name):
         self.name=name 
+        self.score=0
 
     # The switch_players method switches the current player.
     def switch_players(self,other_player):
@@ -71,14 +72,14 @@ class Player:
 
 class Intelligence:
     def __init__(self):
-        self.computer_intelligence = 1  # Default intelligence level
+        self.computer_intelligence = 'low'  # Default intelligence level
         #self.computer=computer_player
 
     def set_computer_intelligence(self, intelligence_level):
         self.computer_intelligence = intelligence_level
 
     def computer_turn(self):
-        if self.computer_intelligence == 1:
+        if self.computer_intelligence == 'low':
             # Simple strategy: Always roll until reaching 20 points or rolling a 1
             while self.computer.turn_total < 20:
                 roll = Dice().roll()
@@ -90,7 +91,7 @@ class Intelligence:
                     self.computer.turn_total += roll
                     print(f"Computer's current turn total: {self.computer.turn_total}")
 
-        elif self.computer_intelligence ==2:
+        elif self.computer_intelligence =='high':
              # Decision point: Hold if the computer has more than 15 points
                 if self.computer.turn_total < 15:
                     roll=Dice().roll()
@@ -111,7 +112,9 @@ class Intelligence:
 class Game:
     def __init__(self):
         self.current_player =None
-        self.total_score = 0
+        self.total_score1 = 0
+        self.player1_scorel=0
+        self.player2_score=0
         self.player1_name=None
         self.player2_name=None
         self.dice_hand=DiceHand()
@@ -122,66 +125,84 @@ class Game:
         self.player2_name = input("Enter player 2's name: ")
         self.player1=Player(self.player1_name)
         self.player2=Player(self.player2_name)
+        self.current_player=self.player1
+        
         self.play_game()
 
     # The play_single_player_game function plays a single-player game against the computer.
     def play_single_player_game(self):
-            player_name = input("Enter your name: ")
-            
-            while True:
-                level = input('Choose the intelligence level(low or high): ')
-                if level.lower() == 'low':
-                    game = Game()
-                    game.current_player=player1
-                    break
-                elif level.lower() == 'high':
-                    intelligence_level = input('Choose the intelligence level for the computer (1 or 2): ')
-                    if intelligence_level.isdigit() and int(intelligence_level) in [1, 2]:
-                        game = Game()  # Creating an instance of Game
-                        game.current_player = Player(Intelligence().set_computer_intelligence(int(intelligence_level)))
-                        break
-                    else:
-                        print('Invalid input. Please choose 1 or 2.')
-                else:
-                    print('Invalid input. Please enter y or n.')
-            game.play_game()
+        self.player1_name = input("Enter your name: ")
+        self.player1=Player(self.player1_name)
+        self.player2_name= 'Computer'
+        self.player2=Player(self.player2_name)
+        self.current_player=self.player1
+        while True:
+            level = input('Choose the intelligence level(low or high): ')
+            if level.lower() == 'low':
+                game = Game()
+                game.current_player=player1
+                break
+            elif level.lower() == 'high':
+                pass
+            else:
+                print('Invalid input. Please enter low or high.')
+        self.play_game()
 
     # The play_turn method plays a turn of the game.
     def play_turn(self):
-            self.current_player=self.player1
-            print(f"It's {self.current_player.name}'s turn.")
-            turn_score=0
-            while True:
+            
+            print(f"\nIt's {self.current_player.name}'s turn.")
+            Keep_going = True
+            while Keep_going:
                 input("Press Enter to roll the dice...")
                 dice_roll = Dice().roll()
-                print(f"{self.current_player.name} rolled a {dice_roll}.")
+                print(f"\n{self.current_player.name} rolled a {dice_roll}.")
                 if dice_roll == 1:
-                    print(f"{self.current_player.name} rolled a 1 and lost all points for this turn.")
-                    self.dice_hand.reset()
-                    self.current_player=self.current_player.switch_players(self.player2 if self.current_player == self.player1 else self.player1)                   
+                    if self.current_player ==self.player1:
+                            self.player1_score =0
+                    else:
+                        self.player2_score =0
+
+                    print(f"\n{self.current_player.name} ends the turn with a total score of {0}.\n")
+                    self.current_player = self.current_player.switch_players(self.player2 if self.current_player == self.player1 else self.player1)
                     break
                 else:
-                    turn_score=self.dice_hand.add_roll(dice_roll)
-                    print(f"{self.current_player.name} accumulated {turn_score} points so far this turn.")
-                    choice=input('Do you want to roll again? (yes/no): ')
-                    if choice.lower() == 'no':
+                    if self.current_player ==self.player1:
+                        self.player1_score +=dice_roll
+                        print(f"{self.current_player.name} accumulated {self.player1_score} points so far this turn.")
+                    else:
+                        self.player2_score += dice_roll
+                        print(f"{self.current_player.name} accumulated {self.player2_score} points so far this turn.")
+                    if self.player1_score >= 20 or self.player2_score >= 20:
+                        Keep_going =False
                         break
-                
-            total_score=self.dice_hand.total()
-            print(f"{self.current_player.name} ends the turn with a total score of {total_score}.\n")
+                    
+                    choice=input('\nDo you want to roll again? (yes/no): ')
+                    if choice.lower() == 'no':
+                        if self.current_player == self.player1:
+                                print(f"{self.current_player.name} ends the turn with a total score of {self.player1_score}.\n")
+
+                        else:
+                                print(f"{self.current_player.name} ends the turn with a total score of {self.player2_score}.\n")
+                        self.current_player = self.current_player.switch_players(self.player2 if self.current_player == self.player1 else self.player1)
+                        break
+                    
+               
+        
 
     # The play_game method plays the game until a player wins.
     def play_game(self):
             print("Let's play the game!")
+            
             while True:
                 self.play_turn()
-                if  self.total_score>= 20:  # Change the winning score to 20
-                    print(f"Congratulations, {self.current_player.name}! You've won with a total score of {self.total_score}!")
+                if  self.player1_score>= 20 :  # Change the winning score to 20
+                    print(f"Congratulations, {self.player1_name}! You've won with a total score of {self.player1_score}!") 
                     break
-                else:
-                    self.current_player.switch_players(self.player2 if self.current_player == self.player1 else self.player1)
+                elif self.player2_score >= 20:
+                    print(f"Congratulations, {self.player2_name}! You've won with a total score of {self.player2_score}!") 
+                    break
                     
-
     def view_rules(self):
         game_rules ='''
             The objective is to be the first player to reach a certain score, usually 100 points.
